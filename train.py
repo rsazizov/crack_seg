@@ -1,3 +1,4 @@
+import math
 import typer
 
 from pathlib import Path
@@ -9,7 +10,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, Callback
 from pytorch_lightning.loggers import WandbLogger
 
 from torch.utils.data import DataLoader
-from torchvision.utils import make_grid
+from torch import nn
 
 from torchmetrics import Precision, Recall, F1Score, JaccardIndex, MetricCollection
 
@@ -46,6 +47,10 @@ class LitSegmentationModel(LightningModule):
 
         self.valid_f1 = F1Score(num_classes=1, multiclass=False)
         self.valid_miou = JaccardIndex(num_classes=2)
+
+        for m in self.model.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight)
 
     def forward(self, x):
         return self.model(x)
@@ -156,7 +161,7 @@ def main(
     callbacks = [
         ModelCheckpoint(
             dirpath=run_dir,
-            monitor='Valid/Loss',
+            monitor='Valid/F1',
             save_top_k=5
         ),
     ]
