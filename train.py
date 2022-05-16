@@ -100,6 +100,7 @@ def main(
         size: Optional[int] = typer.Option(512, help='Input size'),
         lr_scheduler: Optional[bool] = typer.Option(False, help='Use cosine annealing LR scheduler'),
         half: Optional[bool] = typer.Option(False, help='Use half precision'),
+        clip: Optional[float] = typer.Option(0, help='Gradient clipping val (0 = no clipping)'),
         lr: Optional[float] = typer.Option(3e-4, help='Learning rate'),
         augment: Optional[bool] = typer.Option(False, help='Apply augmentations'),
         epochs: Optional[int] = typer.Option(40, help='Number of epochs'),
@@ -127,6 +128,7 @@ def main(
             'size': size,
             'lr_scheduler': lr_scheduler,
             'half': half,
+            'clip': clip,
             'lr': lr,
             'augment': augment,
             'epochs': epochs,
@@ -168,7 +170,9 @@ def main(
         gpus=gpus,
         logger=wandb_logger if log else True,
         callbacks=callbacks,
-        precision=16 if half else 32
+        precision=16 if half else 32,
+        gradient_clip_val=clip,
+        gradient_clip_algorithm='value'
     )
 
     seg_module = LitSegmentationModel(model, lr, loss)
