@@ -1,4 +1,3 @@
-import torch as th
 from torch import nn
 
 from torchvision.models.segmentation import deeplabv3_resnet50

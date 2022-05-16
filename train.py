@@ -3,16 +3,15 @@ import typer
 
 from pathlib import Path
 from typing import Optional
-from pprint import pprint
 
 from pytorch_lightning import LightningModule, Trainer
-from pytorch_lightning.callbacks import ModelCheckpoint, Callback
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 from torch.utils.data import DataLoader
 from torch import nn
 
-from torchmetrics import Precision, Recall, F1Score, JaccardIndex, MetricCollection
+from torchmetrics import F1Score, JaccardIndex
 
 import torch as th
 import datetime
@@ -48,10 +47,6 @@ class LitSegmentationModel(LightningModule):
         self.valid_f1 = F1Score(num_classes=1, multiclass=False)
         self.valid_miou = JaccardIndex(num_classes=2)
 
-        for m in self.model.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight)
-
     def forward(self, x):
         return self.model(x)
 
@@ -59,7 +54,7 @@ class LitSegmentationModel(LightningModule):
         return th.optim.Adam(self.parameters(), lr=self.lr)
 
     def get_loss_and_metrics(self, x, y_hat, y, prefix=''):
-        loss = self.loss(th.flatten(y_hat, start_dim=1), th.flatten(y, start_dim=1))
+        loss = self.loss(th.flatten(y_hat, start_dim=1), th.flatten(y, start_dim=1)).mean()
 
         preds = th.flatten(threshold_mask(y_hat))
         targets = th.flatten(y.to(th.int))
@@ -101,7 +96,7 @@ def main(
         model: SegModel = typer.Option(..., help='Model to train'),
         loss: Optional[Loss] = typer.Option('crossentropy', help='Loss function to optimize'),
         valid_frac: Optional[float] = typer.Option(0.3, help='Fraction of validation set'),
-        cuda: Optional[bool] = typer.Option(False, help='Use CUDA'),
+        gpus: Optional[int] = typer.Option(0, help='GPUs to use'),
         size: Optional[int] = typer.Option(512, help='Input size'),
         lr_scheduler: Optional[bool] = typer.Option(False, help='Use cosine annealing LR scheduler'),
         half: Optional[bool] = typer.Option(False, help='Use half precision'),
@@ -128,7 +123,7 @@ def main(
             'data': data,
             'model': model,
             'valid_frac': valid_frac,
-            'cuda': cuda,
+            'gpus': gpus,
             'size': size,
             'lr_scheduler': lr_scheduler,
             'half': half,
@@ -170,15 +165,15 @@ def main(
 
     trainer = Trainer(
         max_epochs=epochs,
-        gpus=0,
-        logger=wandb_logger,
+        gpus=gpus,
+        logger=wandb_logger if log else True,
         callbacks=callbacks,
         precision=16 if half else 32
     )
 
     seg_module = LitSegmentationModel(model, lr, loss)
 
-    train_dl = DataLoader(train_ds, batch_size=bs, shuffle=True, num_workers=workers)
+    train_dl = DataLoader(train_ds, batch_size=bs, shuffle=True, num_workers=workers, drop_last=True)
     valid_dl = DataLoader(valid_ds, batch_size=bs, num_workers=workers)
 
     trainer.fit(seg_module, train_dl, valid_dl)

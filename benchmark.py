@@ -12,7 +12,7 @@ def get_num_params(module: nn.Module) -> int:
     return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
 
-def get_latencies(module: nn.Module, size: int = 448) -> dict[str, float]:
+def get_latencies(module: nn.Module, size: int = 448) -> float:
     x = th.rand(1, 3, size, size)
 
     # speed up
@@ -26,8 +26,7 @@ def get_latencies(module: nn.Module, size: int = 448) -> dict[str, float]:
     return elapsed * 1e-6
 
 
-def main(
-) -> None:
+def main() -> None:
     results = []
 
     for model in SegModel:
