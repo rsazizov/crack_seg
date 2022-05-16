@@ -7,7 +7,6 @@ from typing import Optional
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.plugins import DDPPlugin
 
 from torch.utils.data import DataLoader
 
@@ -171,7 +170,7 @@ def main(
         precision=16 if half else 32,
         gradient_clip_val=clip,
         gradient_clip_algorithm='value',
-        plugins=DDPPlugin(find_unused_parameters=False)
+        strategy='ddp_find_unused_parameters_false'
     )
 
     seg_module = LitSegmentationModel(model, lr, loss)
