@@ -18,9 +18,7 @@ import datetime
 
 from crack_seg.utils import SegmentationDataset, create_transform, create_augmented_transform, threshold_mask, \
     NormalizeInverse, dice_loss
-from crack_seg.models import SegModel, UNetMRF, Loss, UNet
-
-from torchvision.models.segmentation import deeplabv3_resnet50
+from crack_seg.models import SegModel, UNetMRF, Loss, UNet, DeepLabv3
 
 
 class LitSegmentationModel(LightningModule):
@@ -32,7 +30,7 @@ class LitSegmentationModel(LightningModule):
 
         self.model = {
             SegModel.unet: UNet(num_classes=1),
-            SegModel.deeplabv3: deeplabv3_resnet50(num_classes=1),
+            SegModel.deeplabv3: DeepLabv3(num_classes=1),
             SegModel.unet_mrf: UNetMRF(num_classes=1)
         }[model]
 
