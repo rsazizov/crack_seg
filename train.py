@@ -116,8 +116,7 @@ def main(
         run = now.strftime("%m_%d_%Y_%H_%M_%S")
 
     if log:
-        wandb_logger = WandbLogger(project=project, name=run)
-        wandb_logger.experiment.config.update({
+        wandb_logger = WandbLogger(project=project, name=run, config={
             'data': data,
             'model': model,
             'valid_frac': valid_frac,
@@ -156,6 +155,7 @@ def main(
         ModelCheckpoint(
             dirpath=run_dir,
             monitor='Valid/F1',
+            mode='max',
             save_top_k=5
         ),
     ]

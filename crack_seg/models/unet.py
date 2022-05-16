@@ -30,7 +30,7 @@ class UNet(nn.Module):
         # Up path
         for i, layer in enumerate(self.layers[self.num_layers: -1]):
             xi[-1] = layer(xi[-1], xi[-2 - i])
-        return torch.sigmoid(self.layers[-1](xi[-1]))
+        return self.layers[-1](xi[-1])
 
 
 class DoubleConv(nn.Module):
