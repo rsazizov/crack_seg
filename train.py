@@ -34,7 +34,7 @@ class LitSegmentationModel(LightningModule):
         }[model]
 
         self.loss = {
-            Loss.crossentropy: th.nn.CrossEntropyLoss(),
+            Loss.crossentropy: th.nn.BCEWithLogitsLoss(),
             Loss.dice: dice_loss
         }[loss]
 
@@ -50,18 +50,21 @@ class LitSegmentationModel(LightningModule):
     def configure_optimizers(self):
         return th.optim.Adam(self.parameters(), lr=self.lr)
 
-    def get_loss_and_metrics(self, x, y_hat, y, prefix=''):
+    def get_loss_and_metrics(self, x, y_hat, y, train=False):
         loss = self.loss(th.flatten(y_hat, start_dim=1), th.flatten(y, start_dim=1)).mean()
 
-        preds = th.flatten(threshold_mask(y_hat))
-        targets = th.flatten(y.to(th.int))
+        with th.no_grad():
+            y_hat = th.sigmoid(y_hat)
 
-        if prefix == 'Train/':
-            self.train_f1(preds, targets)
-            self.train_miou(preds, targets)
-        else:
-            self.valid_f1(preds, targets)
-            self.valid_miou(preds, targets)
+            preds = th.flatten(threshold_mask(y_hat))
+            targets = th.flatten(y.to(th.int))
+
+            if train:
+                self.train_f1(preds, targets)
+                self.train_miou(preds, targets)
+            else:
+                self.valid_f1(preds, targets)
+                self.valid_miou(preds, targets)
 
         return loss
 
@@ -69,7 +72,7 @@ class LitSegmentationModel(LightningModule):
         x, y = train_batch
         y_hat = self.forward(x)
 
-        loss = self.get_loss_and_metrics(x, y_hat, y, 'Train/')
+        loss = self.get_loss_and_metrics(x, y_hat, y, True)
 
         self.log('Train/Loss', loss, on_epoch=True, on_step=False)
         self.log('Train/F1', self.train_f1, on_epoch=True, on_step=False)
@@ -81,7 +84,7 @@ class LitSegmentationModel(LightningModule):
         x, y = batch
         y_hat = self.forward(x)
 
-        loss = self.get_loss_and_metrics(x, y_hat, y, 'Valid/')
+        loss = self.get_loss_and_metrics(x, y_hat, y, False)
 
         self.log('Valid/Loss', loss, on_epoch=True, on_step=False)
         self.log('Valid/F1', self.valid_f1, on_epoch=True, on_step=False)
