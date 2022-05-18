@@ -97,7 +97,7 @@ def main(
         loss: Optional[Loss] = typer.Option('crossentropy', help='Loss function to optimize'),
         valid_frac: Optional[float] = typer.Option(0.3, help='Fraction of validation set'),
         gpus: Optional[int] = typer.Option(0, help='GPUs to use'),
-        size: Optional[int] = typer.Option(512, help='Input size'),
+        size: Optional[int] = typer.Option(448, help='Input size'),
         lr_scheduler: Optional[bool] = typer.Option(False, help='Use cosine annealing LR scheduler'),
         half: Optional[bool] = typer.Option(False, help='Use half precision'),
         clip: Optional[float] = typer.Option(0, help='Gradient clipping val (0 = no clipping)'),
