@@ -39,6 +39,7 @@ def main(
 
     with th.no_grad():
         y = model(img_input.unsqueeze(0))
+        # y = th.sigmoid(y)
         print(y.mean())
 
         mask = threshold_mask(y).squeeze().cpu()

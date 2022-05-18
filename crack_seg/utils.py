@@ -68,18 +68,13 @@ class NormalizeInverse(T.Normalize):
 
 def create_augmented_transform(size: int) -> A.Compose:
     return A.Compose([
-        A.LongestMaxSize(size),
-        A.OneOf([
-            A.RandomSizedCrop(min_max_height=(128, 256), height=size, width=size, p=0.5),
-            A.PadIfNeeded(min_height=size, min_width=size, p=0.5)
-        ], p=1),
-        A.VerticalFlip(p=0.5),
-        A.RandomRotate90(p=0.5),
-        A.CLAHE(p=0.8),
-        A.RandomBrightnessContrast(p=0.8),
-        A.RandomGamma(p=0.8),
-        A.RandomShadow(),
-        ToTensorV2()])
+        A.SmallestMaxSize(size),
+        A.CenterCrop(size, size),
+        A.RandomRotate90(),
+        A.HorizontalFlip(p=0.5),
+        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ToTensorV2(),
+    ])
 
 
 def create_transform(size: int) -> A.Compose:
