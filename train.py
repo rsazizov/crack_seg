@@ -172,7 +172,6 @@ def main(
         callbacks=callbacks,
         precision=16 if half else 32,
         gradient_clip_val=clip,
-        gradient_clip_algorithm='value',
         strategy='ddp_find_unused_parameters_false'
     )
 
